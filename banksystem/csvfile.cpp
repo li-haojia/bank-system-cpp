@@ -20,12 +20,23 @@ namespace csv
 {
 
     //-------csv装载------    
-    Parser::Parser(const std::string& path, char sep,bool parseheader)
-        : _sep(sep),_parseheader(parseheader)
+    Parser::Parser(const std::string& path, char sep,bool parseheader,bool index)
+        : _sep(sep),_parseheader(parseheader), _index(index)
     {
+       
         if (!load_file(path))
         {
             throw Error("We can't load file or file is empty");
+        }
+    }
+    Parser::Parser(const std::string& path, std::vector<std::string> headers, char sep, bool parseheader, bool index)
+        : _sep(sep), _parseheader(parseheader), _index(index)
+    {
+      
+        if (!load_file(path))
+        {
+            create_file(path, headers);
+            sync();//写入文件
         }
     }
 
@@ -116,7 +127,6 @@ namespace csv
                     tokenStart = i + 1;
                 }
             }
-
             //end把最后一个放进去
             row->push(it->substr(tokenStart, it->length() - tokenStart));
 
@@ -125,14 +135,24 @@ namespace csv
                 if (row->size() != _header.size())
                     throw Error("corrupted data !");
             _content.push_back(row);    //添加进去
+            if (_index)
+            {
+                _row_index.insert({ row->get_value<std::string>(0), (_content.size() - 1) });
+            }
         }
     }
     //获取一行数据
-    Row& Parser::get_row(unsigned long long int rowPosition) const
+    Row& Parser::get_row(unsigned long long int rowPosition)
     {
         if (rowPosition < _content.size())
             return *(_content[rowPosition]);
         throw Error("can't return this row (doesn't exist)");
+    }
+
+    //获取一行数据
+    Row& Parser::get_row(std::string name)
+    {
+        return get_row(get_row_idx(name));
     }
     //获取总行数
     unsigned long long int Parser::rowcount(void) const
@@ -152,14 +172,24 @@ namespace csv
     //根据表头名获取表头序号
     unsigned long int Parser::get_header_idx(std::string name)
     {
-        //利用hash表快速查找
-        std::unordered_map<std::string, unsigned long int>::const_iterator got = _header_index.find(name);
-        if (got == _header_index.end())
+        if (_index)
+        {
+            //利用hash表快速查找
+            std::unordered_map<std::string, unsigned long int>::const_iterator got = _header_index.find(name);
+            if (got == _header_index.end())
+            {
+                //没有找到
+                throw Error("can't find the column");
+            }
+
+            return got->second;
+        }
+        else
         {
             //没有找到
-            throw Error("can't find the column");
+            throw Error("No row index");
+            return 0;//错误
         }
-        return got->second;
     }
     //获取表头元素
     const std::string Parser::get_header_element(unsigned long int pos) const
@@ -173,16 +203,37 @@ namespace csv
     {
         _header[pos] = name;
     }
+    //根据表头名获取表头序号
+    unsigned long long int Parser::get_row_idx(std::string name)
+    {
+        //利用hash表快速查找
+        auto got = _row_index.find(name);
+        if (got == _row_index.end())
+        {
+            //没有找到
+            throw Error("can't find the row");
+        }
+        return got->second;
+    }
     //删除行
     bool Parser::delete_row(unsigned long long int pos)
     {
         if (pos < _content.size())
         {
+           
+            if (_index)
+            {
+                _row_index.erase(_content[pos]->get_value<std::string>(0));
+            }
             delete* (_content.begin() + pos);       //删除指针指向的内容
             _content.erase(_content.begin() + pos); //删除指针
             return true;
         }
         return false;
+    }
+    void Parser::push_row(const std::vector<std::string>& r)
+    {
+        add_row(rowcount(), r);
     }
     //添加行
     bool Parser::add_row(unsigned long long int pos, const std::vector<std::string>& r)
@@ -196,9 +247,13 @@ namespace csv
         for (auto it = r.begin(); it != r.end(); it++)
             row->push(*it); //添加数据内容
 
-        if (pos <= _content.size()) //添加的内容实在列里的
+        if (pos <= _content.size()) //位置合法
         {
             _content.insert(_content.begin() + pos, row);
+            if (_index)
+            {
+                _row_index.insert({ row->get_value<std::string>(0), pos });
+            }
             return true;
         }
         return false;
@@ -293,6 +348,7 @@ namespace csv
     //文件输出重载，用以保存文件
     std::ofstream& operator<<(std::ofstream& os, const Row& row)
     {
+        os.imbue(std::locale(""));
         for (unsigned int i = 0; i != row._values.size(); i++)
         {
             os << row._values[i];

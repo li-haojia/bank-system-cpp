@@ -81,6 +81,7 @@ namespace csv
             {
                 T res;
                 std::stringstream ss;
+                ss.imbue(std::locale(std::locale::classic(), "", std::locale::ctype));
                 ss << _values[valuePosition];
                 ss >> res;
                 return res;
@@ -99,16 +100,20 @@ namespace csv
         bool set(unsigned long int idx, const T& value)
         {
             //_column 不一定存在
-            /*if (idx >= _column.size())
+            /*if (idx > _column.size())
             {
                 //超出column范围
                 throw Error("Set values out of column");
                 return false;
             }*/
             //进行类型转化
-            std::stringstream ss;
+            std::ostringstream  ss;
+            ss.imbue(std::locale(std::locale::classic(), "", std::locale::ctype));
             ss << value;
-            _values.insert(_values.begin() + idx, ss.str());
+            //if (idx < _column.size())
+                _values[idx] = ss.str();
+           // else
+              //  _values.emplace_back(ss.str());
             return true;
         }
 
@@ -163,8 +168,12 @@ namespace csv
 
     public:
         //打开分析一个csv文件，path代表路径 sep代表分隔符  parseheader表示是否分析表头
-        Parser(char sep = ',', bool parseheader = true) :_sep(','), _parseheader(true) {};
-        Parser(const std::string& path, char sep = ',',bool parseheader=true);
+        Parser(char sep = ',', bool parseheader = true, bool index=true) :_sep(sep), _parseheader(parseheader),_index(index) 
+        {
+        };
+        Parser(const std::string& path, char sep = ',',bool parseheader=true, bool index = true);
+        //如果带表头的话，不存在文件情况下直接自动创建文件，存在的话忽略传入的表头，以文件为准
+        Parser(const std::string& path, std::vector<std::string> headers, char sep=',', bool parseheader=true, bool index = true);
         ~Parser(void);
 
     public:
@@ -173,7 +182,9 @@ namespace csv
         //按照路径加载并分析文件
         bool load_file(const std::string& path);
         //获取一行数据
-        Row& get_row(unsigned long long int row) const;
+        Row& get_row(unsigned long long int row);
+        //获取一行数据
+        Row& get_row(std::string name);
         //获取总行数
         unsigned long long int rowcount(void) const;
         //获取总列数
@@ -192,8 +203,21 @@ namespace csv
         void add_column(std::string name);
         //保存路径
         const std::string& get_file_name(void) const;
+        unsigned long long int get_row_idx(std::string name);
         //删除行
         bool delete_row(unsigned long long int pos);
+        //删除行
+        bool delete_row(std::string name)
+        {
+            return delete_row(get_row_idx(name));
+        }
+        //末尾添加新行
+        void push_row(const std::vector<std::string>& r);
+        template <typename... U>
+        void push_row(U... V)
+        {
+            add_row(rowcount(), V...);
+        }
         //添加行,这种方法更高效，减少递归
         bool add_row(unsigned long long int pos, const std::vector<std::string>& r);
         //添加行，使用<< 作为类型转化  利用扩展参数包，实现变长参数
@@ -205,6 +229,7 @@ namespace csv
         //写入文件
         void sync(void) const;
         // 利用递归对参数模板展开
+        // 将一堆变量转化为一个string的vector
         template <typename... U>
         static std::vector<std::string> gen_string_vec(U... V)
         {
@@ -215,7 +240,8 @@ namespace csv
         template <typename T,typename... U>
         static std::vector<std::string>& gen_string_vec(std::vector<std::string>& vec,T v1, U... V)
         {
-            std::stringstream ss;
+            std::ostringstream  ss;
+            ss.imbue(std::locale(std::locale::classic(), "", std::locale::ctype)); //解决出现千分符逗号问题
             ss <<v1;
             vec.push_back(ss.str());
             return gen_string_vec(vec, V...);
@@ -236,11 +262,18 @@ namespace csv
         std::vector<std::string> _originalFile; //保存原始csv文件
         std::vector<std::string> _header;       //保存header 作为row的column的实例
         std::unordered_map<std::string, unsigned long int> _header_index;
+        std::unordered_map<std::string, unsigned long long int> _row_index;
+
         std::vector<Row*> _content;             //指向每一行
         bool _parseheader;
+        bool _index;
 
     public:
-        Row& operator[](unsigned long long int row) const
+       Row& operator[](const unsigned long long int row)
+        {
+            return get_row(row);
+        }
+        Row& operator[](const std::string row)
         {
             return get_row(row);
         }

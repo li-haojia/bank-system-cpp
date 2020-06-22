@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="源文件\lib">
+      <UniqueIdentifier>{85d7aea6-2a30-49f1-9d5d-b5b85611fa56}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="banksystem.cpp">
@@ -25,6 +28,18 @@
   <ItemGroup>
     <ClInclude Include="csvfile.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\picosha2.h">
+      <Filter>源文件\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\tabulate.hpp">
+      <Filter>源文件\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="status.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="account.h">
+      <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

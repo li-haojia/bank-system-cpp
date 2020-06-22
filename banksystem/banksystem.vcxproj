@@ -152,7 +152,11 @@
     <ClCompile Include="csvfile.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="account.h" />
     <ClInclude Include="csvfile.h" />
+    <ClInclude Include="lib\picosha2.h" />
+    <ClInclude Include="lib\tabulate.hpp" />
+    <ClInclude Include="status.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
