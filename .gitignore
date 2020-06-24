@@ -2,3 +2,5 @@ Debug
 *.obj
 *.log
 *.tlog
+.vs
+.vs/banksystem/v16/Browse.VC.db

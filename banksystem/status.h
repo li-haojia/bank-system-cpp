@@ -25,7 +25,7 @@ public:
 
     static void process(string start_process);
 
-public:
+protected:
     //子类需要首先调用这个，来在hash表中注册
     void set_new_status(string name, status* sub_process);
     // 利用虚函数，用来调用子类的处理
@@ -49,12 +49,13 @@ void status::set_new_status(string name, status* sub_process)
     status_map.insert({ name,sub_process });
     sub_process_name = name;
 }
+//状态机处理主函数
 void status::process(string start_process)
 {
-
     std::string next_status(start_process);
     while (!next_status.empty())
     {
+        //这里利用虚函数特性调用子类的处理函数，通过status_map快速查询类地址
         next_status = status_map.at(next_status)->sub_process(next_status);
     }
 }
@@ -457,7 +458,7 @@ public:
         else 
             cout << "余额不足" << endl;
         show_acc();
-        cout << "输入e退出,输入任意字母继续查询, 回车确认" << endl;
+        cout << "输入e退出,输入任意字母继续取钱, 回车确认" << endl;
         char r;
         cin >> r;
         if (r == 'e' || r == 'E')
@@ -544,7 +545,7 @@ public:
         cin >> who;
         dat->deposit_money(login_account->ID, dmoney, who);
         show_acc();
-        cout << "输入e退出,输入任意字母继续查询, 回车确认" << endl;
+        cout << "输入e退出,输入任意字母继续存款, 回车确认" << endl;
         char r;
         cin >> r;
         if (r == 'e' || r == 'E')

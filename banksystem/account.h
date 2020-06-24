@@ -84,7 +84,6 @@ public:
 	~datamartix();
 	auto  get_account_data(unsigned long long int n)
 	{
-		
 		return  ID_hash.equal_range(n);
 	}
 
@@ -148,12 +147,15 @@ public:
 	void add_account(account& acc, bool syn = true)
 	{
 		account* account_data = new account(acc);
+		long double mm = account_data->money;
+		account_data->money = 0;
 		//插入hash表 快速查找
 		ID_hash.insert({ account_data->ID,account_data });
 		name_hash.insert({ account_data->name,account_data });
 		clientpaser.push_row(acc.ID, acc.name, acc.passwd, acc.address, acc.money);
 		if(syn)
 			clientpaser.sync();
+		deposit_money(acc.ID, mm, "admin", syn);
 	}
 	// 获取系统当前时间
 	// Get current date/time, format is YYYY-MM-DD.HH:mm:ss

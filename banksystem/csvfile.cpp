@@ -348,7 +348,7 @@ namespace csv
     //文件输出重载，用以保存文件
     std::ofstream& operator<<(std::ofstream& os, const Row& row)
     {
-        os.imbue(std::locale(""));
+        os.imbue(std::locale(""));//防止数字有逗号分隔符
         for (unsigned int i = 0; i != row._values.size(); i++)
         {
             os << row._values[i];
