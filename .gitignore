@@ -1,6 +1,12 @@
-Debug
+*/Debug/*
+*/Release/*
+*/x64/*
+Debug/*
+Release/*
+x64/*
 *.obj
 *.log
 *.tlog
 .vs
 .vs/banksystem/v16/Browse.VC.db
+!Release/*.exe
